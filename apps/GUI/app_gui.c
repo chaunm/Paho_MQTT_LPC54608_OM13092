@@ -13,6 +13,7 @@
 static GUI_COLOR button_color[COLOR_BUTTONS] = {GUI_WHITE,   GUI_YELLOW, GUI_ORANGE, GUI_RED,
                                                 GUI_MAGENTA, GUI_BLUE,   GUI_GREEN,  GUI_BLACK};
 
+
 /*******************************************************************************
  * Application implemented functions required by emWin library
  ******************************************************************************/
@@ -194,7 +195,7 @@ void APP_GUI_Init()
 
 int APP_GUI_printf(const char* string, ...)
 {
-    char* displayString = (char*)malloc(1024);
+    char* displayString = (char *)malloc(1024);
     va_list ap;
     va_start(ap, string);
     vsprintf(displayString, string, ap);

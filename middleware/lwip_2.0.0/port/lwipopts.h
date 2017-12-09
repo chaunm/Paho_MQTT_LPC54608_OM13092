@@ -59,6 +59,13 @@
  */
 #define LWIP_SOCKET             1
 
+/**
+ * LWIP_IPV6==1: Enable IPV4 and IPV6
+ */
+#define LWIP_IPV6               1
+#define LWIP_IPV4               1
+#define LWIP_IPV6_MLD           0
+
  /**
  * LWIP_DNS==1: Enable DNS API (require to use sockets.c)
  */
@@ -272,7 +279,7 @@ Some MCU allow computing and verifying the IP, UDP, TCP and ICMP checksums by ha
  * sys_thread_new() when the thread is created.
  */
 #ifndef DEFAULT_THREAD_PRIO
-#define DEFAULT_THREAD_PRIO             3
+#define DEFAULT_THREAD_PRIO             4
 #endif
 
 /*
@@ -296,9 +303,9 @@ Some MCU allow computing and verifying the IP, UDP, TCP and ICMP checksums by ha
 #define SZT_F "u"
 #endif
 
-#define TCPIP_MBOX_SIZE                 32
-#define TCPIP_THREAD_STACKSIZE	        1024
-#define TCPIP_THREAD_PRIO	            8
+#define TCPIP_MBOX_SIZE                 64
+#define TCPIP_THREAD_STACKSIZE	        4096
+#define TCPIP_THREAD_PRIO	        8
 
 /**
  * DEFAULT_RAW_RECVMBOX_SIZE: The mailbox size for the incoming packets on a

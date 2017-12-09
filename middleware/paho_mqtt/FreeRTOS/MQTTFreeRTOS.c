@@ -16,7 +16,9 @@
 *******************************************************************************/
 
 #include "MQTTFreeRTOS.h"
-
+#ifdef MQTT_USE_TLS
+#include "SSL/ssl_mqtt.h"
+#endif
 
 
 int ThreadStart(Thread* thread, void (*fn)(void*), void* arg)
@@ -97,11 +99,13 @@ int FreeRTOS_read(Network* n, unsigned char* buffer, int len, int timeout_ms)
     do
     {
         int rc = 0;
-        
-//		FreeRTOS_setsockopt(n->my_socket, 0, FREERTOS_SO_RCVTIMEO, &xTicksToWait, sizeof(xTicksToWait));
-//		rc = FreeRTOS_recv(n->my_socket, buffer + recvLen, len - recvLen, 0);
+#ifndef MQTT_USE_TLS
         lwip_setsockopt(n->my_socket, 0, SO_RCVTIMEO, &xTicksToWait, sizeof(xTicksToWait));;
         rc = lwip_recv(n->my_socket, buffer + recvLen, len - recvLen, 0);
+#else
+        setsockopt(((mbedtls_net_context*)n->ssl->p_bio)->fd, 0, SO_RCVTIMEO, &xTicksToWait, sizeof(xTicksToWait));
+        rc = mbedtls_ssl_read(n->ssl, buffer + recvLen, len - recvLen);
+#endif
         if (rc > 0)
             recvLen += rc;
         else if (rc < 0)
@@ -110,7 +114,6 @@ int FreeRTOS_read(Network* n, unsigned char* buffer, int len, int timeout_ms)
             break;
         }
     } while (recvLen < len && xTaskCheckForTimeOut(&xTimeOut, &xTicksToWait) == pdFALSE);
-    
     return recvLen;
 }
 
@@ -125,11 +128,13 @@ int FreeRTOS_write(Network* n, unsigned char* buffer, int len, int timeout_ms)
     do
     {
         int rc = 0;
-        
-//		FreeRTOS_setsockopt(n->my_socket, 0, FREERTOS_SO_RCVTIMEO, &xTicksToWait, sizeof(xTicksToWait));
-//		rc = FreeRTOS_send(n->my_socket, buffer + sentLen, len - sentLen, 0);
-        lwip_setsockopt(n->my_socket, 0, SO_RCVTIMEO, &xTicksToWait, sizeof(xTicksToWait));
+#ifndef MQTT_USE_TLS
+        lwip_setsockopt(n->my_socket, 0, SO_SNDTIMEO, &xTicksToWait, sizeof(xTicksToWait));
         rc = lwip_send(n->my_socket, buffer + sentLen, len - sentLen, 0);
+#else
+        setsockopt(((mbedtls_net_context*)n->ssl->p_bio)->fd, 0, SO_SNDTIMEO, &xTicksToWait, sizeof(xTicksToWait));
+        rc = mbedtls_ssl_write(n->ssl, buffer + sentLen, len - sentLen);
+#endif
         if (rc > 0)
             sentLen += rc;
         else if (rc < 0)
@@ -146,114 +151,64 @@ int FreeRTOS_write(Network* n, unsigned char* buffer, int len, int timeout_ms)
 void FreeRTOS_disconnect(Network* n)
 {
 //	FreeRTOS_closesocket(n->my_socket);
+#ifndef MQTT_USE_TLS
     lwip_close(n->my_socket);
+#endif
 }
 
 
 void NetworkInit(Network* n)
 {
+#ifndef MQTT_USE_TLS
     n->my_socket = 0;
+#else
+    n->ssl = NULL;
+#endif
     n->mqttread = FreeRTOS_read;
     n->mqttwrite = FreeRTOS_write;
     n->disconnect = FreeRTOS_disconnect;
 }
 
-
-int NetworkConnect(Network* n, char* addr, int port)
+#ifdef MQTT_USE_TLS
+int NetworkConnect(Network* n, char* addr, char* port, char* pers)
+#else
+int NetworkConnect(Network* n, char* addr, uint16_t port)
+#endif
 {
-//    struct freertos_sockaddr sAddr;
+#ifndef MQTT_USE_TLS
     struct hostent *hostAddr;
     struct sockaddr_in sAddr;
     int retVal = -1;
-    uint32_t ipAddress;
+    struct in_addr inAddr;
+    uint32_t serverIP;
     
-//    if ((ipAddress = FreeRTOS_gethostbyname(addr)) == 0)
     if ((hostAddr = lwip_gethostbyname(addr)) == 0)
         goto exit;
-    ipAddress = (((ip_addr_t **)(hostAddr->h_addr_list))[0]->addr);
-    PRINTF("host IP address %d.%d.%d.%d\r\n", ipAddress & 0x000000FF, (ipAddress & 0x0000FF00) >> 8,
-           (ipAddress & 0x00FF0000) >> 16, (ipAddress & 0xFF000000) >> 24);
-//    sAddr.sin_port = FreeRTOS_htons(port);
+    inAddr.s_addr = *((uint32_t*)hostAddr->h_addr);
+    serverIP = inAddr.s_addr;
+    PRINTF("host IP address %d.%d.%d.%d\r\n", serverIP & 0x000000FF, (serverIP & 0x0000FF00) >> 8,
+           (serverIP & 0x00FF0000) >> 16, (serverIP & 0xFF000000) >> 24);
     sAddr.sin_len = sizeof(sAddr);
     sAddr.sin_port = lwip_htons(port); 
     sAddr.sin_family = AF_INET;
-    sAddr.sin_addr.s_addr = (ipAddress);
-    
-//    if ((n->my_socket = FreeRTOS_socket(FREERTOS_AF_INET, FREERTOS_SOCK_STREAM, FREERTOS_IPPROTO_TCP)) < 0)
+    sAddr.sin_addr.s_addr = (serverIP);
     if ((n->my_socket = lwip_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
         goto exit;
     
     if ((retVal = lwip_connect(n->my_socket, (struct sockaddr*)&sAddr, sizeof(sAddr))) < 0)
     {
-//        FreeRTOS_closesocket(n->my_socket);
         lwip_close(n->my_socket);
         goto exit;
     }
-    
 exit:
     return retVal;
-}
-
-
-
-#if 0
-int NetworkConnectTLS(Network *n, char* addr, int port, SlSockSecureFiles_t* certificates, unsigned char sec_method, unsigned int cipher, char server_verify)
-{
-    SlSockAddrIn_t sAddr;
-    int addrSize;
-    int retVal;
-    unsigned long ipAddress;
-    
-    retVal = sl_NetAppDnsGetHostByName(addr, strlen(addr), &ipAddress, AF_INET);
-    if (retVal < 0) {
+#else
+    n->ssl = SSL_ConnectionInit(addr, port, pers);
+    if (n->ssl != NULL)
+    {
+        return 0;
+    }
+    else
         return -1;
-    }
-    
-    sAddr.sin_family = AF_INET;
-    sAddr.sin_port = sl_Htons((unsigned short)port);
-    sAddr.sin_addr.s_addr = sl_Htonl(ipAddress);
-    
-    addrSize = sizeof(SlSockAddrIn_t);
-    
-    n->my_socket = sl_Socket(SL_AF_INET, SL_SOCK_STREAM, SL_SEC_SOCKET);
-    if (n->my_socket < 0) {
-        return -1;
-    }
-    
-    SlSockSecureMethod method;
-    method.secureMethod = sec_method;
-    retVal = sl_SetSockOpt(n->my_socket, SL_SOL_SOCKET, SL_SO_SECMETHOD, &method, sizeof(method));
-    if (retVal < 0) {
-        return retVal;
-    }
-    
-    SlSockSecureMask mask;
-    mask.secureMask = cipher;
-    retVal = sl_SetSockOpt(n->my_socket, SL_SOL_SOCKET, SL_SO_SECURE_MASK, &mask, sizeof(mask));
-    if (retVal < 0) {
-        return retVal;
-    }
-    
-    if (certificates != NULL) {
-        retVal = sl_SetSockOpt(n->my_socket, SL_SOL_SOCKET, SL_SO_SECURE_FILES, certificates->secureFiles, sizeof(SlSockSecureFiles_t));
-        if (retVal < 0)
-        {
-            return retVal;
-        }
-    }
-    
-    retVal = sl_Connect(n->my_socket, (SlSockAddr_t *)&sAddr, addrSize);
-    if (retVal < 0) {
-        if (server_verify || retVal != -453) {
-            sl_Close(n->my_socket);
-            return retVal;
-        }
-    }
-    
-    SysTickIntRegister(SysTickIntHandler);
-    SysTickPeriodSet(80000);
-    SysTickEnable();
-    
-    return retVal;
+#endif // !defined(MQTT_USE_TLS)
 }
-#endif

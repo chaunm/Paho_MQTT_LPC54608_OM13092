@@ -1580,7 +1580,7 @@
  * sys_thread_new() when the thread is created.
  */
 #if !defined SLIPIF_THREAD_PRIO || defined __DOXYGEN__
-#define SLIPIF_THREAD_PRIO              1
+#define SLIPIF_THREAD_PRIO              18
 #endif
 
 /**

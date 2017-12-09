@@ -16,7 +16,6 @@
 
 #if !defined(MQTTFreeRTOS_H)
 #define MQTTFreeRTOS_H
-
 #include "FreeRTOS.h"
 /* This version of free rtos has no socket libary - use lwIP library instead */
 #include "lwip/sockets.h"
@@ -27,7 +26,11 @@
 //#include "FreeRTOS_IP.h"
 #include "semphr.h"
 #include "task.h"
-
+#ifdef MQTT_USE_TLS
+#include "mbedtls/ssl.h"
+#include "mbedtls/net_sockets.h"
+#endif
+     
 typedef int xSocket_t;
 typedef struct Timer 
 {
@@ -39,10 +42,14 @@ typedef struct Network Network;
 
 struct Network
 {
-	xSocket_t my_socket;  //socket by freeRTOS        
-	int (*mqttread) (Network*, unsigned char*, int, int);
-	int (*mqttwrite) (Network*, unsigned char*, int, int);
-	void (*disconnect) (Network*);
+#ifdef MQTT_USE_TLS
+    mbedtls_ssl_context* ssl;
+#else
+    xSocket_t my_socket;  //socket by freeRTOS   
+#endif // MQTT_USE_TLS     
+    int (*mqttread) (Network*, unsigned char*, int, int);
+    int (*mqttwrite) (Network*, unsigned char*, int, int);
+    void (*disconnect) (Network*);
 };
 
 void TimerInit(Timer*);
@@ -72,7 +79,11 @@ int FreeRTOS_write(Network*, unsigned char*, int, int);
 void FreeRTOS_disconnect(Network*);
 
 void NetworkInit(Network*);
-int NetworkConnect(Network*, char*, int);
+#ifndef MQTT_USE_TLS
+int NetworkConnect(Network*, char*, uint16_t);
+#else
+int NetworkConnect(Network*, char*, char*, char*);
+#endif
 /*int NetworkConnectTLS(Network*, char*, int, SlSockSecureFiles_t*, unsigned char, unsigned int, char);*/
 
 #endif

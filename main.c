@@ -84,8 +84,7 @@
 /*******************************************************************************
 * Prototypes
 ******************************************************************************/
-sys_thread_t xMqttTask;
-sys_thread_t xPingTask;
+sys_thread_t xMqttTask = NULL;
 /*******************************************************************************
 * Variables
 ******************************************************************************/
@@ -93,7 +92,8 @@ sys_thread_t xPingTask;
 /*******************************************************************************
  * Code
  ******************************************************************************/
-
+extern int ssl_thread(void);
+extern int SSL_ConnectionInit(char*, char*, char*);
 /*!
  * @brief Initializes lwIP stack.
  */
@@ -125,11 +125,10 @@ static void stack_init(void *arg)
     PRINTF(" IPv4 Gateway     : %u.%u.%u.%u\r\n", ((u8_t *)&fsl_netif0_gw)[0], ((u8_t *)&fsl_netif0_gw)[1],
            ((u8_t *)&fsl_netif0_gw)[2], ((u8_t *)&fsl_netif0_gw)[3]);
     PRINTF("************************************************\r\n");
-    
-    xTaskNotify(xMqttTask, 0x01, eNoAction);    
-//    xTaskNotify(xPingTask, 0x01, eNoAction); 
-    
+    vTaskDelay(pdMS_TO_TICKS(2000));
 
+    if (xMqttTask != NULL)
+        xTaskNotify(xMqttTask, 0x01, eNoAction);  
     vTaskDelete(NULL);
 }
 
@@ -180,17 +179,17 @@ int main(void)
     /* Initialize GUI */
     APP_GUI_Init();
     /* Initialize lwIP from thread */
-    if(sys_thread_new("main", stack_init, NULL, INIT_THREAD_STACKSIZE, INIT_THREAD_PRIO) == NULL)
-        LWIP_ASSERT("main(): Task creation failed.", 0);
+    if(sys_thread_new("lwip init", stack_init, NULL, INIT_THREAD_STACKSIZE, 3) == NULL)
+        LWIP_ASSERT("lwip init(): Task creation failed.", 0);
     /* Connect to mqtt */
-    xTaskCreate( prvMQTTEchoTask, "mqtt", INIT_THREAD_STACKSIZE, NULL, 4, &xMqttTask );
+//#ifndef MQTT_USE_TLS
+    xTaskCreate( prvMQTTEchoTask, "mqtt", INIT_THREAD_STACKSIZE, NULL, 7, &xMqttTask );
     PRINTF("Creat mqtt process @ task ID %d\n", xMqttTask);
-    /* Create ping thread */
-//    xTaskCreate( ping_thread, "ping", INIT_THREAD_STACKSIZE, NULL, INIT_THREAD_PRIO, &xPingTask );
-//    PRINTF("Creat ping process @ task ID %d\n", xPingTask);
+//#endif
+
     /* RTOS task scheduler process */
     vTaskStartScheduler();
-
+  
     /* Will not get here unless a task calls vTaskEndScheduler ()*/
     return 0;
 }
