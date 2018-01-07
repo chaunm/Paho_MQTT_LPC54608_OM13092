@@ -58,7 +58,8 @@ int MutexUnlock(Mutex* mutex)
 
 void TimerCountdownMS(Timer* timer, unsigned int timeout_ms)
 {
-    timer->xTicksToWait = timeout_ms / portTICK_PERIOD_MS; /* convert milliseconds to ticks */
+//    timer->xTicksToWait = timeout_ms / portTICK_PERIOD_MS; /* convert milliseconds to ticks */
+    timer->xTicksToWait = pdMS_TO_TICKS(timeout_ms); /* convert milliseconds to ticks */
     vTaskSetTimeOutState(&timer->xTimeOut); /* Record the time at which this function was entered. */
 }
 
@@ -91,7 +92,7 @@ void TimerInit(Timer* timer)
 
 int FreeRTOS_read(Network* n, unsigned char* buffer, int len, int timeout_ms)
 {
-    TickType_t xTicksToWait = timeout_ms / portTICK_PERIOD_MS; /* convert milliseconds to ticks */
+    TickType_t xTicksToWait = pdMS_TO_TICKS(timeout_ms); //timeout_ms / portTICK_PERIOD_MS; /* convert milliseconds to ticks */
     TimeOut_t xTimeOut;
     int recvLen = 0;
     
@@ -100,6 +101,7 @@ int FreeRTOS_read(Network* n, unsigned char* buffer, int len, int timeout_ms)
     {
         int rc = 0;
 #ifndef MQTT_USE_TLS
+        
         lwip_setsockopt(n->my_socket, 0, SO_RCVTIMEO, &xTicksToWait, sizeof(xTicksToWait));;
         rc = lwip_recv(n->my_socket, buffer + recvLen, len - recvLen, 0);
 #else
@@ -120,7 +122,7 @@ int FreeRTOS_read(Network* n, unsigned char* buffer, int len, int timeout_ms)
 
 int FreeRTOS_write(Network* n, unsigned char* buffer, int len, int timeout_ms)
 {
-    TickType_t xTicksToWait = timeout_ms / portTICK_PERIOD_MS; /* convert milliseconds to ticks */
+    TickType_t xTicksToWait = pdMS_TO_TICKS(timeout_ms); //timeout_ms / portTICK_PERIOD_MS; /* convert milliseconds to ticks */
     TimeOut_t xTimeOut;
     int sentLen = 0;
     

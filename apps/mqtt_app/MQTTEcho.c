@@ -8,13 +8,11 @@
 #include "task.h"
 #include "queue.h"
 
-
-
-#define MQTT_TASK 1
 #include "MQTTClient.h"
 #include "MQTTEcho.h"
 #include "lwip/dns.h"
 
+#define TEST_TOPIC      "LPC54608/TEST"
 
 void messageArrived(MessageData* data)
 {
@@ -37,10 +35,7 @@ void prvMQTTEchoTask(void *pvParameters)
     }
     PRINTF("START MQTT Task\r\n");
     MQTTPacket_connectData connectData = MQTTPacket_connectData_initializer;
-    
-    pvParameters = 0;
     NetworkInit(&network);
-    MQTTClientInit(&client, &network, 30000, sendbuf, sizeof(sendbuf), readbuf, sizeof(readbuf));
 #ifndef MQTT_USE_TLS
     char* address = "iot.eclipse.org";
     uint16_t port = 1883;
@@ -71,8 +66,9 @@ void prvMQTTEchoTask(void *pvParameters)
         vTaskDelete(NULL);
     }
 #endif // !defined(MQTT_USE_TLS)
+    MQTTClientInit(&client, &network, 30000, sendbuf, sizeof(sendbuf), readbuf, sizeof(readbuf));
     
-#if defined(MQTT_TASK)
+#ifdef MQTT_TASK
     if ((rc = MQTTStartTask(&client)) != pdPASS)
     {
         PRINTF("Return code from start tasks is %d\r\n", rc);
@@ -93,7 +89,7 @@ void prvMQTTEchoTask(void *pvParameters)
     else
         PRINTF("MQTT Connected\n");
     
-    if ((rc = MQTTSubscribe(&client, "FreeRTOS/sample/#", APP_QOS, messageArrived)) != 0)
+    if ((rc = MQTTSubscribe(&client, TEST_TOPIC, APP_QOS, messageArrived)) != 0)
         PRINTF("Return code from MQTT subscribe is %d\n", rc);
     
     while (1)
@@ -106,12 +102,13 @@ void prvMQTTEchoTask(void *pvParameters)
         sprintf(payload, "message number %d", ++count);
         message.payloadlen = strlen(payload);
         
-        if ((rc = MQTTPublish(&client, "FreeRTOS/sample/a", &message)) != 0)
-            PRINTF("Return code from MQTT publish is %d\n", rc);;
+        if ((rc = MQTTPublish(&client, TEST_TOPIC, &message)) != 0)
+            PRINTF("Return code from MQTT publish is %d\n", rc);
 #if !defined(MQTT_TASK)
-            if ((rc = MQTTYield(&client, 1000)) != 0)
-                PRINTF("Return code from yield is %d\n", rc);
-#endif
+        if ((rc = MQTTYield(&client, 1000)) != 0)
+            PRINTF("Return code from yield is %d\n", rc);
+#endif            
+//        vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
 

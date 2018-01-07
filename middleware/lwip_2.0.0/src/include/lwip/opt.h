@@ -223,7 +223,7 @@
  * already use it.
  */
 #if !defined MEM_LIBC_MALLOC || defined __DOXYGEN__
-#define MEM_LIBC_MALLOC                 0
+#define MEM_LIBC_MALLOC                 1
 #endif
 
 /**
@@ -236,7 +236,7 @@
  * not only for internal pools defined in memp_std.h)!
  */
 #if !defined MEMP_MEM_MALLOC || defined __DOXYGEN__
-#define MEMP_MEM_MALLOC                 0
+#define MEMP_MEM_MALLOC                 1
 #endif
 
 /**
@@ -266,7 +266,7 @@
  *      memp_malloc() or memp_free() is called (useful but slow!)
  */
 #if !defined MEMP_OVERFLOW_CHECK || defined __DOXYGEN__
-#define MEMP_OVERFLOW_CHECK             0
+#define MEMP_OVERFLOW_CHECK             1
 #endif
 
 /**
@@ -1580,7 +1580,7 @@
  * sys_thread_new() when the thread is created.
  */
 #if !defined SLIPIF_THREAD_PRIO || defined __DOXYGEN__
-#define SLIPIF_THREAD_PRIO              18
+#define SLIPIF_THREAD_PRIO              17
 #endif
 
 /**
@@ -1760,7 +1760,7 @@
  * in seconds. (does not require sockets.c, and will affect tcp.c)
  */
 #if !defined LWIP_TCP_KEEPALIVE || defined __DOXYGEN__
-#define LWIP_TCP_KEEPALIVE              0
+#define LWIP_TCP_KEEPALIVE              1
 #endif
 
 /**
@@ -1768,7 +1768,7 @@
  * SO_SNDTIMEO processing.
  */
 #if !defined LWIP_SO_SNDTIMEO || defined __DOXYGEN__
-#define LWIP_SO_SNDTIMEO                0
+#define LWIP_SO_SNDTIMEO                1
 #endif
 
 /**
@@ -1776,7 +1776,7 @@
  * SO_RCVTIMEO processing.
  */
 #if !defined LWIP_SO_RCVTIMEO || defined __DOXYGEN__
-#define LWIP_SO_RCVTIMEO                0
+#define LWIP_SO_RCVTIMEO                1
 #endif
 
 /**
@@ -1798,7 +1798,7 @@
  * LWIP_SO_LINGER==1: Enable SO_LINGER processing.
  */
 #if !defined LWIP_SO_LINGER || defined __DOXYGEN__
-#define LWIP_SO_LINGER                  0
+#define LWIP_SO_LINGER                  1
 #endif
 
 /**
@@ -1812,14 +1812,14 @@
  * By default, TCP socket/netconn close waits 20 seconds max to send the FIN
  */
 #if !defined LWIP_TCP_CLOSE_TIMEOUT_MS_DEFAULT || defined __DOXYGEN__
-#define LWIP_TCP_CLOSE_TIMEOUT_MS_DEFAULT 20000
+#define LWIP_TCP_CLOSE_TIMEOUT_MS_DEFAULT 60000
 #endif
 
 /**
  * SO_REUSE==1: Enable SO_REUSEADDR option.
  */
 #if !defined SO_REUSE || defined __DOXYGEN__
-#define SO_REUSE                        0
+#define SO_REUSE                        1
 #endif
 
 /**
@@ -1828,7 +1828,7 @@
  * WARNING: Adds a memcpy for every packet if passing to more than one pcb!
  */
 #if !defined SO_REUSE_RXTOALL || defined __DOXYGEN__
-#define SO_REUSE_RXTOALL                0
+#define SO_REUSE_RXTOALL                1
 #endif
 
 /**
@@ -1996,24 +1996,24 @@
 
 #else
 
-#define LINK_STATS                      0
-#define ETHARP_STATS                    0
-#define IP_STATS                        0
-#define IPFRAG_STATS                    0
-#define ICMP_STATS                      0
-#define IGMP_STATS                      0
-#define UDP_STATS                       0
-#define TCP_STATS                       0
-#define MEM_STATS                       0
-#define MEMP_STATS                      0
-#define SYS_STATS                       0
-#define LWIP_STATS_DISPLAY              0
-#define IP6_STATS                       0
-#define ICMP6_STATS                     0
-#define IP6_FRAG_STATS                  0
-#define MLD6_STATS                      0
-#define ND6_STATS                       0
-#define MIB2_STATS                      0
+#define LINK_STATS                      1
+#define ETHARP_STATS                    1
+#define IP_STATS                        1
+#define IPFRAG_STATS                    1
+#define ICMP_STATS                      1
+#define IGMP_STATS                      1
+#define UDP_STATS                       1
+#define TCP_STATS                       1
+#define MEM_STATS                       1
+#define MEMP_STATS                      1
+#define SYS_STATS                       1
+#define LWIP_STATS_DISPLAY              1
+#define IP6_STATS                       1
+#define ICMP6_STATS                     1
+#define IP6_FRAG_STATS                  1
+#define MLD6_STATS                      1
+#define ND6_STATS                       1
+#define MIB2_STATS                      1
 
 #endif /* LWIP_STATS */
 /**
@@ -2528,7 +2528,8 @@
  * @{
  */
 /**
- * LWIP_DBG_MIN_LEVEL: After masking, the value of the debug is
+ * LWIP_DBG_MIN_LEVEL: After masking, the value of the 
+is
  * compared against this value. If it is smaller, then debugging
  * messages are written.
  */

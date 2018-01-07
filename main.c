@@ -177,14 +177,14 @@ int main(void)
         if (testSD[i] != i)
             while(1);
     /* Initialize GUI */
-    APP_GUI_Init();
+//    APP_GUI_Init();
     /* Initialize lwIP from thread */
     if(sys_thread_new("lwip init", stack_init, NULL, INIT_THREAD_STACKSIZE, 3) == NULL)
         LWIP_ASSERT("lwip init(): Task creation failed.", 0);
     /* Connect to mqtt */
 //#ifndef MQTT_USE_TLS
-    xTaskCreate( prvMQTTEchoTask, "mqtt", INIT_THREAD_STACKSIZE, NULL, 7, &xMqttTask );
-    PRINTF("Creat mqtt process @ task ID %d\n", xMqttTask);
+    xTaskCreate( prvMQTTEchoTask, "mqtt", INIT_THREAD_STACKSIZE, NULL, 4, &xMqttTask );
+    PRINTF("Creat mqtt process @ task ID %p\n", xMqttTask);
 //#endif
 
     /* RTOS task scheduler process */

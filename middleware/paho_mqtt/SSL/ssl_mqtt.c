@@ -76,6 +76,7 @@ mbedtls_ssl_config conf;// = (mbedtls_ssl_config*)malloc(sizeof(mbedtls_ssl_conf
 mbedtls_x509_crt cacert;// = (mbedtls_x509_crt*)malloc(sizeof(mbedtls_x509_crt));
 mbedtls_x509_crt clientCrt;// = (mbedtls_x509_crt*)malloc(sizeof(mbedtls_x509_crt));
 mbedtls_pk_context clientPk;// = (mbedtls_pk_context*)malloc(sizeof(mbedtls_pk_context));
+mbedtls_ssl_session session;
 
 static void my_debug( void *ctx, int level,
                       const char *file, int line,
@@ -222,6 +223,7 @@ mbedtls_ssl_context* SSL_ConnectionInit(const char* serverName, const char* serv
     }
 
     mbedtls_printf( " ok\n" );
+    mbedtls_ssl_get_session( &ssl, &session );
     return (&ssl);
 
     /*

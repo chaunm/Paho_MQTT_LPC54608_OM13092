@@ -47,6 +47,29 @@
 #define SYS_LIGHTWEIGHT_PROT    1
 
 /**
+ * LWIP_TCPIP_CORE_LOCKING
+ * Creates a global mutex that is held during TCPIP thread operations.
+ * Can be locked by client code to perform lwIP operations without changing
+ * into TCPIP thread using callbacks. See LOCK_TCPIP_CORE() and
+ * UNLOCK_TCPIP_CORE().
+ * Your system should provide mutexes supporting priority inversion to use this.
+ */
+#if !defined LWIP_TCPIP_CORE_LOCKING || defined __DOXYGEN__
+#define LWIP_TCPIP_CORE_LOCKING         1
+#endif
+
+/**
+ * LWIP_TCPIP_CORE_LOCKING_INPUT: when LWIP_TCPIP_CORE_LOCKING is enabled,
+ * this lets tcpip_input() grab the mutex for input packets as well,
+ * instead of allocating a message and passing it to tcpip_thread.
+ *
+ * ATTENTION: this does not work when tcpip_input() is called from
+ * interrupt context!
+ */
+#if !defined LWIP_TCPIP_CORE_LOCKING_INPUT || defined __DOXYGEN__
+#define LWIP_TCPIP_CORE_LOCKING_INPUT   0
+#endif
+/**
  * NO_SYS==0: Use RTOS
  */
 #define NO_SYS                  0
@@ -216,7 +239,7 @@
 
 /* ---------- Statistics options ---------- */
 #ifndef LWIP_STATS
-#define LWIP_STATS 0
+#define LWIP_STATS 1
 #endif
 #ifndef LWIP_PROVIDE_ERRNO
 #define LWIP_PROVIDE_ERRNO 1
@@ -305,7 +328,7 @@ Some MCU allow computing and verifying the IP, UDP, TCP and ICMP checksums by ha
 
 #define TCPIP_MBOX_SIZE                 64
 #define TCPIP_THREAD_STACKSIZE	        4096
-#define TCPIP_THREAD_PRIO	        8
+#define TCPIP_THREAD_PRIO	        17
 
 /**
  * DEFAULT_RAW_RECVMBOX_SIZE: The mailbox size for the incoming packets on a
